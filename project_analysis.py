@@ -125,11 +125,11 @@ def moderator_moderation_table(full_data,save_file_path, filter1, filter2):
                                 row['Moderation Outcome Mark'] - row['First Calculated Mark']])
 
     table_df = pd.DataFrame(columns = ["Moderator","Supervisor","Student ID", "1st mark","2nd mark","Final mark","Final-1st","2nd-1st"], data = empty_array)
-    table_df.sort_values(by="Moderator", inplace=True)
+    table_df.sort_values(by=["Moderator", "Supervisor"], inplace=True)
     
     ax.axis('off')
     ax.axis('tight')
-    filtered_table_df = table_df.loc[(table_df['Final-1st'] >= filter1) | (table_df['2nd-1st'] >= filter1)]
+    filtered_table_df = table_df.loc[(table_df['Final-1st'] >= filter1) | (table_df['2nd-1st'] >= filter1) | (table_df['2nd-1st'] <= 0-filter1) | (table_df['2nd-1st'] <= 0-filter1)]
     table_1 = ax.table(cellText=filtered_table_df.values,colLabels=table_df.columns,loc='center')
     table_1.scale(1,1) 
     fig.tight_layout()
@@ -235,7 +235,7 @@ def mark_overview(data, save_file_path):
         min_fail = fail.min()[0]
         max_fail = fail.max()[0]
         
-        df_to_plot["Grade"] = ["First","Upper second 2.1","Lower seconds 2.2","Third","Fail"]
+        df_to_plot["Grade"] = ["First","Upper second 2.1","Lower second 2.2","Third","Fail"]
         df_to_plot["Grade boundaries"] = ["[70,100]","[60,70)","[50,60)","[40,50)",f"(0,40) [{min_fail}, {max_fail}]"]
         df_to_plot["No. of projects"] = [len(g_1.index),len(g_2.index),len(g_3.index),len(g_4.index),len(fail.index)]
     
@@ -358,9 +358,9 @@ def class_change_after_moderation(data, save_file_path):
                                      len(g2_to_g1.index),len(g3_to_g2.index),len(fail_to_g3.index)]
 
 
-    final_result_list = ([', '.join(g1_to_g2["Student Number"].values.tolist()),', '.join(g2_to_g3["Student Number"].values.tolist()),\
-                          ', '.join(g3_to_fail["Student Number"].values.tolist()),', '.join(g2_to_g1["Student Number"].values.tolist()),\
-                          ', '.join(g3_to_g2["Student Number"].values.tolist()),', '.join(fail_to_g3["Student Number"].values.tolist())])
+    final_result_list = ([', '.join(g1_to_g2["Student Number"].astype(str).values.tolist()),', '.join(g2_to_g3["Student Number"].astype(str).values.tolist()),\
+                          ', '.join(g3_to_fail["Student Number"].astype(str).values.tolist()),', '.join(g2_to_g1["Student Number"].astype(str).values.tolist()),\
+                          ', '.join(g3_to_g2["Student Number"].astype(str).values.tolist()),', '.join(fail_to_g3["Student Number"].astype(str).values.tolist())])
     
     df_to_plot["Student ID (Final mark - 1st mark)"] = final_result_list
     ax.axis('off')
@@ -428,7 +428,8 @@ if __name__ == '__main__':
     filter2 = int(config.get('project_analysis','filter2'))
 
     full_data = openFile(FILE_PATH)
-    full_data = full_data.dropna(subset=['First Calculated Mark','Moderation Outcome Mark'])
+    #full_data = full_data.dropna(subset=['First Calculated Mark','Moderation Outcome Mark'])
+    full_data = full_data.dropna(subset=['First Calculated Mark','Moderation Outcome Mark','Final Mark'])
     save_file_path = os.path.join(OUTPUT_FOLDER_PATH,OUTPUT_FOLDER_NAME)
     create_save_file(save_file_path)
 
