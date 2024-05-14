@@ -39,7 +39,7 @@ def linear_supervisors_vs_moderator_plot(full_data,save_file_path):
     plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.15)
 
     scatter_colors = []
-    if GRADE:
+    if GRADE == 'BSC':
         for i in full_data["Final Mark"]:
             if i >= GRADE_BOUNDARIES["First"]:
                 scatter_colors.append(mcolors.CSS4_COLORS["orange"])
@@ -49,7 +49,7 @@ def linear_supervisors_vs_moderator_plot(full_data,save_file_path):
                 scatter_colors.append(mcolors.CSS4_COLORS["slateblue"])
             else:
                 scatter_colors.append(mcolors.CSS4_COLORS["gold"])
-    else:
+    elif GRADE == 'MSC':
         for i in full_data["Final Mark"]:
             if i >= GRADE_BOUNDARIES["Distinction"]:
                 scatter_colors.append(mcolors.CSS4_COLORS["orange"])
@@ -60,7 +60,9 @@ def linear_supervisors_vs_moderator_plot(full_data,save_file_path):
             else:
                 scatter_colors.append(mcolors.CSS4_COLORS["gold"])
 
-
+    else:
+        print("Grade not recognised")
+        return
     sup_grade = np.array(full_data["First Calculated Mark"]).reshape(-1,1)
     mod_grade = np.array(full_data["Moderation Outcome Mark"]).reshape(-1,1)
 
@@ -216,7 +218,7 @@ def moderation_mark_change_bin(data,save_file_path):
 def mark_overview(data, save_file_path):
     global GRADE_BOUNDARIES
     global GRADE
-
+    
     fig, ax = plt.subplots()
     plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.15)
     fig.patch.set_visible(False)
@@ -226,20 +228,20 @@ def mark_overview(data, save_file_path):
     
     df_to_plot = pd.DataFrame(columns=["Grade","Grade boundaries","No. of projects","%","cumulative %"])
 
-    if GRADE:
+    if GRADE == 'BSC':
         g_1 = input_data[input_data['Final Mark'] >= 70]
         g_2 = input_data.loc[(input_data['Final Mark'] >= 60) & (input_data['Final Mark'] < 70)]
         g_3 = input_data.loc[(input_data['Final Mark'] >= 50) & (input_data['Final Mark'] < 60)]
         g_4 = input_data.loc[(input_data['Final Mark'] >= 40) & (input_data['Final Mark'] < 50)]
         fail = input_data[input_data['Final Mark'] < 40]
-        min_fail = fail.min()[0]
-        max_fail = fail.max()[0]
+        min_fail = int(fail.min()[0])
+        max_fail = int(fail.max()[0])
         
         df_to_plot["Grade"] = ["First","Upper second 2.1","Lower second 2.2","Third","Fail"]
         df_to_plot["Grade boundaries"] = ["[70,100]","[60,70)","[50,60)","[40,50)",f"(0,40) [{min_fail}, {max_fail}]"]
         df_to_plot["No. of projects"] = [len(g_1.index),len(g_2.index),len(g_3.index),len(g_4.index),len(fail.index)]
     
-    else:
+    elif GRADE == 'MSC':
         g_1 = input_data[input_data['Final Mark'] >= 70]
         g_2 = input_data.loc[(input_data['Final Mark'] >= 60) & (input_data['Final Mark'] < 70)]
         g_3 = input_data.loc[(input_data['Final Mark'] >= 50) & (input_data['Final Mark'] < 60)]
@@ -251,7 +253,10 @@ def mark_overview(data, save_file_path):
         df_to_plot["Grade boundaries"] = ["[70,100]","[60,70)","[50,60)",f"(0,40) [{min_fail}, {max_fail}]"]
         df_to_plot["No. of projects"] = [len(g_1.index),len(g_2.index),len(g_3.index),len(fail.index)]
             
-
+    else:
+        print("Grade not recognised")
+        return None
+    
     percentages = [((n/total_projects) * 100) for n in df_to_plot["No. of projects"]]
     df_to_plot["%"] = [round(n,2) for n in percentages]
     df_to_plot["cumulative %"] = [round(sum(percentages[:n+1]),2) for n in range(len(df_to_plot["Grade"]))]
@@ -301,7 +306,8 @@ def mark_overview_bin(data, save_file_path):
 def replace_mark_with_grade(i):
     global GRADE_BOUNDARIES
     global GRADE
-    if GRADE:
+    
+    if GRADE == 'BSC':
         if i >= GRADE_BOUNDARIES["First"]:
             return "First"
         elif i >= GRADE_BOUNDARIES["Second"]:
@@ -310,7 +316,7 @@ def replace_mark_with_grade(i):
             return "Third"
         else:
             return "Fail"
-    else:
+    elif GRADE == 'MSC':
         if i >= GRADE_BOUNDARIES["Distinction"]:
             return "Distinction"
         elif i >= GRADE_BOUNDARIES["Merit"]:
@@ -319,6 +325,8 @@ def replace_mark_with_grade(i):
             return "Pass"
         else:
             return "Fail"
+    else:
+        return
 
 def class_change_after_moderation(data, save_file_path):
     global GRADE
@@ -418,6 +426,7 @@ if __name__ == '__main__':
     GRADE = config.get('project_analysis','grade_boundary')
     if GRADE.upper() == 'BSC':
         GRADE_BOUNDARIES = boundary_bsc
+        print("huh")
     elif GRADE.upper() == 'MSC':
         GRADE_BOUNDARIES = boundary_msc
     else:
@@ -433,11 +442,7 @@ if __name__ == '__main__':
     save_file_path = os.path.join(OUTPUT_FOLDER_PATH,OUTPUT_FOLDER_NAME)
     create_save_file(save_file_path)
 
-    if GRADE:
-        GRADE_BOUNDARIES = boundary_bsc
-    else:
-        GRADE_BOUNDARIES = boundary_msc
-
-    print("Running")
+    print(f"Running with {GRADE.upper()} grades")
+    print("Grade boundary:", GRADE_BOUNDARIES)
     plot_plots(full_data, save_file_path,filter1,filter2)
     print("Done")
